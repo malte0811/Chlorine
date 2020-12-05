@@ -1,6 +1,7 @@
 package me.jellysquid.mods.sodium.client.render.chunk.shader;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import dev.hanetzer.chlorine.common.config.Config;
 import me.jellysquid.mods.sodium.client.gl.SodiumVertexFormats.ChunkMeshAttribute;
 import me.jellysquid.mods.sodium.client.gl.attribute.GlVertexFormat;
 import me.jellysquid.mods.sodium.client.gl.shader.*;
@@ -72,6 +73,9 @@ public abstract class ChunkRenderShaderBackend<T extends ChunkGraphicsState, P e
     private ShaderConstants createShaderConstants(ChunkFogMode fogMode) {
         ShaderConstants.Builder builder = ShaderConstants.builder();
         fogMode.addConstants(builder);
+        if (Config.CLIENT.useCompactVertexFormat.get()) {
+            builder.define("COMPACT_VERTICES");
+        }
 
         this.addShaderConstants(builder);
 

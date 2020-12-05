@@ -27,7 +27,7 @@ public class SodiumVertexFormats {
     public static final GlVertexFormat<ChunkMeshAttribute> CHUNK_MESH_COMPACT = GlVertexAttribute.builder(ChunkMeshAttribute.class, 20)
             .addElement(ChunkMeshAttribute.POSITION, 0, GlVertexAttributeFormat.UNSIGNED_SHORT, 4, true)
             .addElement(ChunkMeshAttribute.COLOR, 8, GlVertexAttributeFormat.UNSIGNED_BYTE, 4, true)
-            .addElement(ChunkMeshAttribute.TEXTURE, 12, GlVertexAttributeFormat.UNSIGNED_SHORT, 2, true)
+            .addElement(ChunkMeshAttribute.TEXTURE, 12, GlVertexAttributeFormat.UNSIGNED_SHORT, 2, false)
             .addElement(ChunkMeshAttribute.LIGHT, 16, GlVertexAttributeFormat.UNSIGNED_SHORT, 2, true)
             .build();
 
@@ -56,8 +56,8 @@ public class SodiumVertexFormats {
                 buffer.putShort(position + 4, denormalizeFloatAsShort(quad.getZ(i)));
                 buffer.putShort(position + 6, (short) (mipped ? 65535 : 0));
                 buffer.putInt(position + 8, quad.getColor(i));
-                buffer.putShort(position + 12, denormalizeFloatAsShort(quad.getTexU(i)));
-                buffer.putShort(position + 14, denormalizeFloatAsShort(quad.getTexV(i)));
+                buffer.putShort(position + 12, denormalizeFloatAsShortSpecial(quad.getTexU(i)));
+                buffer.putShort(position + 14, denormalizeFloatAsShortSpecial(quad.getTexV(i)));
                 buffer.putInt(position + 16, encodeLightMapTexCoord(quad.getLight(i)));
 
                 position += 20;
@@ -98,6 +98,17 @@ public class SodiumVertexFormats {
     private static short denormalizeFloatAsShort(float value) {
         return (short) (value * 65535.0f);
     }
+
+
+    private static short denormalizeFloatAsShortSpecial(float value) {
+        final float scale = 65536;
+        int result = Math.round(value * scale);
+        if (result > (1 << 16) - 1) {
+            --result;
+        }
+        return (short) result;
+    }
+
 
     /**
      * This moves some work out the shader code and simplifies things a bit. In vanilla, the game encodes light map

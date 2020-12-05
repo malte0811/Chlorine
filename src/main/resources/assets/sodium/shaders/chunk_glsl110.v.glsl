@@ -43,7 +43,11 @@ void main() {
 
     // Pass the color and texture coordinates to the fragment shader
     v_Color = a_Color;
+#ifdef COMPACT_VERTICES
+    v_TexCoord = a_TexCoord / 65536.0;
+#else
     v_TexCoord = a_TexCoord;
+#endif
     v_LightCoord = a_LightCoord;
 
 #ifdef USE_MULTITEX
