@@ -51,12 +51,14 @@ void main() {
     sampleBlockTex = texture2D(u_BlockTex, v_TexCoord);
 #endif
 
+#ifdef OPAQUE
     // TODO: Mipmap textures have partial transparency and render as black
     // We should try to fix this outside of shader code
     // This re-implements the glAlphaFunc call that Minecraft uses for cutout rendering
     if (sampleBlockTex.a < 0.5) {
         sampleBlockTex.a = 0.0;
     }
+#endif
 
     // Light map texture sample
     vec4 sampleLightTex = texture2D(u_LightTex, v_LightCoord);

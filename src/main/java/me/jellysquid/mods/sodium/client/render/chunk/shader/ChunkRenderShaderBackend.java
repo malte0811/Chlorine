@@ -8,13 +8,14 @@ import me.jellysquid.mods.sodium.client.gl.shader.*;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkGraphicsState;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkRenderBackend;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPass;
+import me.jellysquid.mods.sodium.client.render.chunk.passes.WorldRenderPhase;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.EnumMap;
 
 public abstract class ChunkRenderShaderBackend<T extends ChunkGraphicsState, P extends ChunkProgram>
         implements ChunkRenderBackend<T> {
-    private final EnumMap<ChunkFogMode, P> programs = new EnumMap<>(ChunkFogMode.class);
+    private final EnumMap<ChunkFogMode, EnumMap<WorldRenderPhase, P>> programs = new EnumMap<>(ChunkFogMode.class);
 
     protected final GlVertexFormat<ChunkMeshAttribute> vertexFormat;
 
@@ -26,14 +27,18 @@ public abstract class ChunkRenderShaderBackend<T extends ChunkGraphicsState, P e
 
     @Override
     public final void createShaders() {
-        this.programs.put(ChunkFogMode.NONE, this.createShader(ChunkFogMode.NONE, this.vertexFormat));
-        this.programs.put(ChunkFogMode.LINEAR, this.createShader(ChunkFogMode.LINEAR, this.vertexFormat));
-        this.programs.put(ChunkFogMode.EXP2, this.createShader(ChunkFogMode.EXP2, this.vertexFormat));
+        for (ChunkFogMode fogMode : ChunkFogMode.values()) {
+            EnumMap<WorldRenderPhase, P> mapForFogMode = new EnumMap<>(WorldRenderPhase.class);
+            for (WorldRenderPhase phase : WorldRenderPhase.values()) {
+                mapForFogMode.put(phase, this.createShader(fogMode, phase, this.vertexFormat));
+            }
+            this.programs.put(fogMode, mapForFogMode);
+        }
     }
 
-    private P createShader(ChunkFogMode fogMode, GlVertexFormat<ChunkMeshAttribute> format) {
-        GlShader vertShader = this.createVertexShader(fogMode);
-        GlShader fragShader = this.createFragmentShader(fogMode);
+    private P createShader(ChunkFogMode fogMode, WorldRenderPhase phase, GlVertexFormat<ChunkMeshAttribute> format) {
+        GlShader vertShader = this.createVertexShader(fogMode, phase);
+        GlShader fragShader = this.createFragmentShader(fogMode, phase);
 
         ChunkProgramComponentBuilder components = new ChunkProgramComponentBuilder();
         components.fog = fogMode.getFactory();
@@ -60,21 +65,24 @@ public abstract class ChunkRenderShaderBackend<T extends ChunkGraphicsState, P e
     protected abstract void modifyProgram(GlProgram.Builder builder, ChunkProgramComponentBuilder components,
                                           GlVertexFormat<ChunkMeshAttribute> format);
 
-    private GlShader createVertexShader(ChunkFogMode fogMode) {
+    private GlShader createVertexShader(ChunkFogMode fogMode, WorldRenderPhase phase) {
         return ShaderLoader.loadShader(ShaderType.VERTEX, new ResourceLocation("sodium", "chunk_glsl110.v.glsl"),
-                this.createShaderConstants(fogMode));
+                this.createShaderConstants(fogMode, phase));
     }
 
-    private GlShader createFragmentShader(ChunkFogMode fogMode) {
+    private GlShader createFragmentShader(ChunkFogMode fogMode, WorldRenderPhase phase) {
         return ShaderLoader.loadShader(ShaderType.FRAGMENT, new ResourceLocation("sodium", "chunk_glsl110.f.glsl"),
-                this.createShaderConstants(fogMode));
+                this.createShaderConstants(fogMode, phase));
     }
 
-    private ShaderConstants createShaderConstants(ChunkFogMode fogMode) {
+    private ShaderConstants createShaderConstants(ChunkFogMode fogMode, WorldRenderPhase phase) {
         ShaderConstants.Builder builder = ShaderConstants.builder();
         fogMode.addConstants(builder);
         if (Config.CLIENT.useCompactVertexFormat.get()) {
             builder.define("COMPACT_VERTICES");
+        }
+        if (phase == WorldRenderPhase.OPAQUE) {
+            builder.define("OPAQUE");
         }
 
         this.addShaderConstants(builder);
@@ -86,8 +94,8 @@ public abstract class ChunkRenderShaderBackend<T extends ChunkGraphicsState, P e
 
     protected abstract P createShaderProgram(ResourceLocation name, int handle, ChunkProgramComponentBuilder components);
 
-    protected void beginRender(MatrixStack matrixStack, BlockRenderPass pass) {
-        this.activeProgram = this.programs.get(ChunkFogMode.getActiveMode());
+    protected void beginRender(MatrixStack matrixStack, WorldRenderPhase phase, BlockRenderPass pass) {
+        this.activeProgram = this.programs.get(ChunkFogMode.getActiveMode()).get(phase);
         this.activeProgram.bind(matrixStack);
     }
 
@@ -97,8 +105,10 @@ public abstract class ChunkRenderShaderBackend<T extends ChunkGraphicsState, P e
 
     @Override
     public void delete() {
-        for (P shader : this.programs.values()) {
-            shader.delete();
+        for (EnumMap<?, P> subMap : this.programs.values()) {
+            for (P shader : subMap.values()) {
+                shader.delete();
+            }
         }
     }
 

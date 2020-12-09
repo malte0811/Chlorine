@@ -11,6 +11,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.oneshot.ChunkProgramOneshot
 import me.jellysquid.mods.sodium.client.render.chunk.oneshot.ChunkRenderBackendOneshot;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPass;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPassManager;
+import me.jellysquid.mods.sodium.client.render.chunk.passes.WorldRenderPhase;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.impl.SingleTextureRenderPipeline;
 import me.jellysquid.mods.sodium.client.render.chunk.shader.ChunkProgramComponentBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.shader.texture.ChunkProgramSingleTexture;
@@ -45,8 +46,12 @@ public class GL20ChunkRenderBackend extends ChunkRenderBackendOneshot<GL20Graphi
     }
 
     @Override
-    public void beginRender(MatrixStack matrixStack, BlockRenderPass pass) {
-        super.beginRender(matrixStack, pass);
+    protected void beginRender(
+            MatrixStack matrixStack,
+            WorldRenderPhase phase,
+            BlockRenderPass pass
+    ) {
+        super.beginRender(matrixStack, phase, pass);
 
         this.vertexFormat.enableVertexAttributes();
 

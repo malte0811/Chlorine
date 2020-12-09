@@ -19,6 +19,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkRenderData;
 import me.jellysquid.mods.sodium.client.render.chunk.lists.ChunkRenderList;
 import me.jellysquid.mods.sodium.client.render.chunk.lists.ChunkRenderListIterator;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPass;
+import me.jellysquid.mods.sodium.client.render.chunk.passes.WorldRenderPhase;
 import me.jellysquid.mods.sodium.client.util.math.FrustumExtended;
 import me.jellysquid.mods.sodium.client.world.ChunkStatusListener;
 import me.jellysquid.mods.sodium.common.util.DirectionUtil;
@@ -398,11 +399,11 @@ public class ChunkRenderManager<T extends ChunkGraphicsState> implements ChunkSt
         return render;
     }
 
-    public void renderChunks(MatrixStack matrixStack, BlockRenderPass pass, double x, double y, double z) {
+    public void renderChunks(MatrixStack matrixStack, WorldRenderPhase phase, BlockRenderPass pass, double x, double y, double z) {
         ChunkRenderListIterator<T> iterator = this.chunkRenderLists[pass.ordinal()]
                 .iterator(pass.isForwardRendering());
 
-        this.backend.renderChunks(matrixStack, pass, iterator, new ChunkCameraContext(x, y, z));
+        this.backend.renderChunks(matrixStack, phase, pass, iterator, new ChunkCameraContext(x, y, z));
     }
 
     public void tickVisibleRenders() {

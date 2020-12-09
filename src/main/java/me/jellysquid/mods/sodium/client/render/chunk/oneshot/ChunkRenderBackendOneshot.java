@@ -14,6 +14,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkMeshData;
 import me.jellysquid.mods.sodium.client.render.chunk.data.ChunkRenderData;
 import me.jellysquid.mods.sodium.client.render.chunk.lists.ChunkRenderListIterator;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPass;
+import me.jellysquid.mods.sodium.client.render.chunk.passes.WorldRenderPhase;
 import me.jellysquid.mods.sodium.client.render.chunk.shader.ChunkRenderShaderBackend;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
@@ -63,8 +64,14 @@ public abstract class ChunkRenderBackendOneshot<T extends ChunkOneshotGraphicsSt
     }
 
     @Override
-    public void renderChunks(MatrixStack matrixStack, BlockRenderPass pass, ChunkRenderListIterator<T> it, ChunkCameraContext camera) {
-        this.beginRender(matrixStack, pass);
+    public void renderChunks(
+            MatrixStack matrixStack,
+            WorldRenderPhase phase,
+            BlockRenderPass pass,
+            ChunkRenderListIterator<T> it,
+            ChunkCameraContext camera
+    ) {
+        this.beginRender(matrixStack, phase, pass);
 
         while (it.hasNext()) {
             T state = it.getGraphicsState();

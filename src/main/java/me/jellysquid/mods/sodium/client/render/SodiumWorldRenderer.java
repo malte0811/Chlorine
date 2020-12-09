@@ -205,14 +205,14 @@ public class SodiumWorldRenderer implements ChunkStatusListener {
 
     public void drawChunkLayers(WorldRenderPhase phase, MatrixStack matrixStack, double x, double y, double z) {
         for (BlockRenderPass pass : this.chunkRenderBackend.getRenderPassManager().getPassesForPhase(phase)) {
-            this.drawChunkLayer(pass, matrixStack, x, y, z);
+            this.drawChunkLayer(phase, pass, matrixStack, x, y, z);
         }
     }
 
     /**
      * Performs a render pass for the given {@link RenderType} and draws all visible chunks for it.
      */
-    public void drawChunkLayer(BlockRenderPass pass, MatrixStack matrixStack, double x, double y, double z) {
+    public void drawChunkLayer(WorldRenderPhase phase, BlockRenderPass pass, MatrixStack matrixStack, double x, double y, double z) {
         pass.beginRender();
 
         // We don't have a great way to check if underwater fog is being used, so assume that terrain will only ever
@@ -221,7 +221,7 @@ public class SodiumWorldRenderer implements ChunkStatusListener {
             RenderSystem.disableFog();
         }
 
-        this.chunkRenderManager.renderChunks(matrixStack, pass, x, y, z);
+        this.chunkRenderManager.renderChunks(matrixStack, phase, pass, x, y, z);
 
         pass.endRender();
 

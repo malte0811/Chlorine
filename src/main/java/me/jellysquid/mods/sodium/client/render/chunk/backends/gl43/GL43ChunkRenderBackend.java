@@ -30,6 +30,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.multidraw.ChunkDrawParamsVe
 import me.jellysquid.mods.sodium.client.render.chunk.multidraw.ChunkRenderBackendMultiDraw;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPass;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.BlockRenderPassManager;
+import me.jellysquid.mods.sodium.client.render.chunk.passes.WorldRenderPhase;
 import me.jellysquid.mods.sodium.client.render.chunk.passes.impl.MultiTextureRenderPipeline;
 import me.jellysquid.mods.sodium.client.render.chunk.region.ChunkRegion;
 import me.jellysquid.mods.sodium.client.render.chunk.region.ChunkRegionManager;
@@ -171,8 +172,8 @@ public class GL43ChunkRenderBackend extends ChunkRenderBackendMultiDraw<GL43Grap
     }
 
     @Override
-    public void renderChunks(MatrixStack matrixStack, BlockRenderPass pass, ChunkRenderListIterator<GL43GraphicsState> renders, ChunkCameraContext camera) {
-        this.beginRender(matrixStack, pass);
+    public void renderChunks(MatrixStack matrixStack, WorldRenderPhase phase, BlockRenderPass pass, ChunkRenderListIterator<GL43GraphicsState> renders, ChunkCameraContext camera) {
+        this.beginRender(matrixStack, phase, pass);
 
         this.bufferManager.cleanup();
         this.setupDrawBatches(renders, camera);
