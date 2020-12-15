@@ -1,5 +1,6 @@
 package me.jellysquid.mods.sodium.client.render.chunk.tasks;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkGraphicsState;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkRenderBackend;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkRenderContainer;
@@ -32,6 +33,10 @@ import net.minecraftforge.client.model.ModelDataManager;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
 
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -42,18 +47,18 @@ import java.util.Objects;
  * array allocations, they are pooled to ensure that the garbage collector doesn't become overloaded.
  */
 public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkRenderBuildTask<T> {
+    private static final List<RenderType> BLOCK_RENDER_TYPES = RenderType.getBlockRenderTypes();
     private final ChunkRenderBackend<T> renderBackend;
     private final ChunkRenderContainer<T> render;
     private final ChunkBuilder<T> chunkBuilder;
-    private final Vector3d camera;
     private final WorldSlice slice;
     private final BlockPos offset;
+    private final Map<Block, List<RenderType>> renderLayers = new Object2ObjectOpenHashMap<>();
 
     public ChunkRenderRebuildTask(ChunkBuilder<T> chunkBuilder, ChunkRenderBackend<T> renderBackend, ChunkRenderContainer<T> render, WorldSlice slice) {
         this.renderBackend = renderBackend;
         this.chunkBuilder = chunkBuilder;
         this.render = render;
-        this.camera = chunkBuilder.getCameraPosition();
         this.slice = slice;
         this.offset = render.getRenderOrigin();
     }
@@ -86,7 +91,6 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
             for (int z = minZ; z < maxZ; z++) {
                 for (int x = minX; x < maxX; x++) {
                     BlockState blockState = this.slice.getBlockState(x, y, z);
-                    Block block = blockState.getBlock();
 
                     if (blockState.isAir()) {
                         continue;
@@ -94,12 +98,8 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
 
                     pos.setPos(x, y, z);
 
-                    if (block.getRenderType(blockState) == BlockRenderType.MODEL) {
-                        for (RenderType layer : RenderType.getBlockRenderTypes()) {
-                            if (!RenderTypeLookup.canRenderInLayer(blockState, layer)) {
-                                continue;
-                            }
-
+                    if (blockState.getRenderType() == BlockRenderType.MODEL) {
+                        for (RenderType layer : getRenderTypesForState(blockState)) {
                             ForgeHooksClient.setRenderLayer(layer);
                             ChunkBuildBuffers.ChunkBuildBufferDelegate builder = buffers.get(layer);
                             builder.setOffset(x - offset.getX(), y - offset.getY(), z - offset.getZ());
@@ -115,7 +115,7 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
                         }
                     }
 
-                    FluidState fluidState = block.getFluidState(blockState);
+                    FluidState fluidState = blockState.getFluidState();
 
                     if (!fluidState.isEmpty()) {
                         RenderType layer = RenderTypeLookup.getRenderType(fluidState);
@@ -161,6 +161,21 @@ public class ChunkRenderRebuildTask<T extends ChunkGraphicsState> extends ChunkR
         renderData.setBounds(bounds.build(this.render.getChunkPos()));
 
         return new ChunkBuildResult<>(this.render, renderData.build());
+    }
+
+    @Nonnull
+    private List<RenderType> getRenderTypesForState(BlockState state) {
+        List<RenderType> result = this.renderLayers.get(state.getBlock());
+        if (result == null) {
+            result = new ArrayList<>();
+            for (RenderType type : BLOCK_RENDER_TYPES) {
+                if (RenderTypeLookup.canRenderInLayer(state, type)) {
+                    result.add(type);
+                }
+            }
+            this.renderLayers.put(state.getBlock(), result);
+        }
+        return result;
     }
 
     @Override
