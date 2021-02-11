@@ -3,6 +3,8 @@ package dev.hanetzer.chlorine.common.config;
 import me.jellysquid.mods.sodium.client.gui.SodiumGameOptions;
 import net.minecraft.client.resources.I18n;
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.ModLoadingContext;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class Config {
@@ -120,5 +122,9 @@ public class Config {
         final Pair<Client, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Client::new);
         clientSpec = specPair.getRight();
         CLIENT = specPair.getLeft();
+    }
+
+    public static void register() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.clientSpec);
     }
 }

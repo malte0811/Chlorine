@@ -7,8 +7,6 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,10 +22,9 @@ public class Chlorine {
 
     public static boolean ftbChunksLoaded;
     public Chlorine() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.clientSpec);
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> Config::register);
         ftbChunksLoaded = ModList.get().isLoaded("ftbchunks");
         MinecraftForge.EVENT_BUS.register(this);
-        DistExecutor.runWhenOn(Dist.CLIENT, () -> Config::register);
         ModLoadingContext.get().registerExtensionPoint(
                 ExtensionPoint.DISPLAYTEST,
                 ()->Pair.of(()->FMLNetworkConstants.IGNORESERVERONLY, (s,b)->true)
