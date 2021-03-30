@@ -26,6 +26,9 @@ import net.minecraft.world.chunk.NibbleArray;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.lighting.IWorldLightListener;
 import net.minecraft.world.lighting.WorldLightManager;
+import net.minecraftforge.client.model.ModelDataManager;
+import net.minecraftforge.client.model.data.EmptyModelData;
+import net.minecraftforge.client.model.data.IModelData;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -72,6 +75,7 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
     private final NibbleArray[] skyLightArrays;
     private final BiomeCache[] biomeCaches;
     private final BiomeContainer[] biomeArrays;
+    private final IModelData[] tileModelData;
 
     // The biome blend caches for each color resolver type
     // This map is always re-initialized, but the caches themselves are taken from an object pool
@@ -129,6 +133,7 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
 
     public WorldSlice() {
         this.blockStates = new BlockState[BLOCK_COUNT];
+        this.tileModelData = new IModelData[BLOCK_COUNT];
         this.blockLightArrays = new NibbleArray[SECTION_COUNT];
         this.skyLightArrays = new NibbleArray[SECTION_COUNT];
         this.biomeCaches = new BiomeCache[CHUNK_COUNT];
@@ -187,6 +192,7 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
 
                 int minBlockZ = Math.max(minZ, chunkZ << 4);
                 int maxBlockZ = Math.min(maxZ, (chunkZ + 1) << 4);
+                final Map<BlockPos, IModelData> chunkModelData = ModelDataManager.getModelData(world, chunk.getPos());
 
                 for (int chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
                     int chunkYLocal = chunkY - this.chunkOffsetY;
@@ -213,10 +219,13 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
                     int maxBlockY = Math.min(maxY, (chunkY + 1) << 4);
 
                     // Iterate over all block states in the overlapping section between this world slice and chunk section
+                    BlockPos.Mutable currentPos = new BlockPos.Mutable();
                     for (int y = minBlockY; y < maxBlockY; y++) {
                         for (int z = minBlockZ; z < maxBlockZ; z++) {
                             for (int x = minBlockX; x < maxBlockX; x++) {
-                                this.blockStates[this.getBlockIndex(x, y, z)] = section.getBlockState(x & 15, y & 15, z & 15);
+                                final int arrayIndex = this.getBlockIndex(x, y, z);
+                                this.blockStates[arrayIndex] = section.getBlockState(x & 15, y & 15, z & 15);
+                                this.tileModelData[arrayIndex] = chunkModelData.getOrDefault(currentPos.setPos(x, y, z), EmptyModelData.INSTANCE);
                             }
                         }
                     }
@@ -240,6 +249,10 @@ public class WorldSlice extends ReusableObject implements IBlockDisplayReader, B
         } else {
             return Blocks.AIR.getDefaultState();
         }
+    }
+
+    public IModelData getTileModelData(int x, int y, int z) {
+        return this.tileModelData[this.getBlockIndex(x, y, z)];
     }
 
     @Override
