@@ -3,7 +3,6 @@ buildscript {
         mavenLocal()
         maven { url = 'https://files.minecraftforge.net/maven' }
         maven { url = "https://repo.spongepowered.org/maven" }
-        jcenter()
         mavenCentral()
         maven {
             name = "sonatype"
@@ -14,7 +13,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
         classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
         classpath "io.freefair.gradle:lombok-plugin:4.1.6"
     }
